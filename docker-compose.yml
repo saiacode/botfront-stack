@@ -1,8 +1,8 @@
 # Botfront para single node
 # SOCKET_URL
 # NAME
-
-#
+# BF_URL
+# BF_PROJECT_ID
 version: "3.8"
 
 networks:
