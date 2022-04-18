@@ -3,6 +3,8 @@
 # NAME
 # BF_URL
 # BF_PROJECT_ID
+# NODE_LABEL (PRODUCTION, STAGING, DEVELOPMENT, BACKUP)
+
 version: "3.8"
 
 networks:
@@ -30,7 +32,7 @@ services:
           memory: 1000M
       placement:
         constraints:
-          - node.labels.botfront.ips == 1
+          - node.labels.botfront.ips == ${NODE_LABEL}
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-public
@@ -59,7 +61,7 @@ services:
     deploy:
       placement:
         constraints:
-          - node.labels.botfront.ips == 1
+          - node.labels.botfront.ips == ${NODE_LABEL}
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-public
@@ -90,7 +92,7 @@ services:
     deploy:
       placement:
         constraints:
-          - node.labels.botfront.ips == 1
+          - node.labels.botfront.ips == ${NODE_LABEL}
     networks:
       - private
     volumes:
@@ -108,7 +110,7 @@ services:
     deploy:
       placement:
         constraints:
-          - node.labels.botfront.ips == 1
+          - node.labels.botfront.ips == ${NODE_LABEL}
     networks:
       - private
      
@@ -124,7 +126,7 @@ services:
           memory: 50M
       placement:
         constraints:
-          - node.labels.botfront.ips == 1
+          - node.labels.botfront.ips == ${NODE_LABEL}
     networks:
       - private
     volumes:
