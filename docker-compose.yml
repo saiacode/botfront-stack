@@ -4,6 +4,7 @@
 # BF_URL
 # BF_PROJECT_ID
 # NODE_LABEL (PRODUCTION, STAGING, DEVELOPMENT, BACKUP)
+# RASA_CPU_LIMIT (E.G.: 1.8 , 3.9 ) 
 
 version: "3.8"
 
@@ -25,8 +26,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.9'
-          memory: 3000M
+          cpus: '${RASA_CPU_LIMIT-1.8}'
+          memory: ${RASA_MEMORY_LIMIT-3000}M
         reservations:
           cpus: '1.2'
           memory: 1000M
