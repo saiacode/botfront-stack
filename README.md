@@ -1,4 +1,4 @@
-# Botfront single node
+# Botfront single node stack
 
 `NAME`
 `BF_URL`
