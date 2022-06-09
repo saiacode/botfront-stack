@@ -1,1 +1,9 @@
-# botfront
+# Botfront single node
+
+`NAME`
+`BF_URL`
+`BF_PROJECT_ID`
+`SOCKET_URL`
+`NODE_LABEL`
+`RASA_CPU_LIMIT`
+`RASA_MEMORY_LIMIT`
