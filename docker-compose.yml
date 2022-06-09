@@ -12,7 +12,7 @@ networks:
   private:
   ingress:
     external: true
-    name: traefik-public
+    name: ${INGRESS_NET}
     
  
 volumes:
@@ -21,23 +21,99 @@ volumes:
   db_data:
 
 services:
-  rasa:
-    image: botfront/rasa-for-botfront:v2.3.3-bf.3
+
+      
+  botfront:
+    image: ${BF_IMAGE}
+    deploy:
+      placement:
+        constraints:
+          - node.labels.botfront.${NODE_LABEL} == 1 
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=${INGRESS_NET}
+        - traefik.constraint-label=${INGRESS_NET}
+        - traefik.http.routers.${NAME}-http.rule=Host(`${BF_URL}`)
+        - traefik.http.routers.${NAME}-http.entrypoints=http
+        - traefik.http.routers.${NAME}-http.middlewares=https-redirect
+        - traefik.http.routers.${NAME}-https.rule=Host(`${BF_URL}`)
+        - traefik.http.routers.${NAME}-https.entrypoints=https
+        - traefik.http.routers.${NAME}-https.tls=true
+        - traefik.http.routers.${NAME}-https.tls.certresolver=le
+        - traefik.http.services.${NAME}.loadbalancer.server.port=3000
+    networks:
+      - private
+      - ingress
+    volumes:
+      - rasa_data:/app/models:ro
+    environment:
+      - PORT=3000
+      - ROOT_URL=https://botfront.${NAME}.saia.ar
+      - AUGMENTATION_FACTOR=50
+      - MONGO_URL=mongodb://mongo:27017/bf
+      
+  actions:
+    image: ${ACTIONS_IMAGE}
+    deploy:
+      placement:
+        constraints:
+          - node.labels.botfront.${NODE_LABEL} == 1 
+    networks:
+      - private
+    volumes:
+      - rasa_actions_data:/app/actions
+    command:
+      - start
+      - --debug
+      - --actions
+      - actions
+    environment:
+      - BF_PROJECT_ID=${BF_PROJECT_ID}
+      
+  duckling:
+    image: ${DUCKLING_IMAGE}
+    deploy:
+      placement:
+        constraints:
+          - node.labels.botfront.${NODE_LABEL} == 1 
+    networks:
+      - private
+     
+  mongo:
+    image: ${MONGO_IMAGE}
     deploy:
       resources:
         limits:
-          cpus: '${RASA_CPU_LIMIT-1.8}'
-          memory: ${RASA_MEMORY_LIMIT-3000}M
+          cpus: ${MONGO_CPU_LIMIT}
+          memory: ${MONGO_MEMORY_LIMIT}
         reservations:
-          cpus: '1.2'
-          memory: 1000M
+          cpus: ${MONGO_CPU_RESERVATION}
+          memory: ${MONGO_MEMORY_RESERVATION}
       placement:
         constraints:
-          - node.labels.botfront.ips == ${NODE_LABEL}
+          - node.labels.botfront.${NODE_LABEL} == 1 
+    networks:
+      - private
+    volumes:
+      - db_data:/data/db
+
+  rasa:
+    image: ${RASA_IMAGE}
+    deploy:
+      resources:
+        limits:
+          cpus: ${RASA_CPU_LIMIT}
+          memory: ${RASA_MEMORY_LIMIT}
+        reservations:
+          cpus: ${RASA_CPU_RESERVATION}
+          memory: ${RASA_MEMORY_RESERVATION}
+      placement:
+        constraints:
+          - node.labels.botfront.${NODE_LABEL} == 1 
       labels:
         - traefik.enable=true
-        - traefik.docker.network=traefik-public
-        - traefik.constraint-label=traefik-public
+        - traefik.docker.network=${INGRESS_NET}
+        - traefik.constraint-label=${INGRESS_NET}
         - traefik.http.routers.rasa_${NAME}-http.rule=Host(`${SOCKET_URL}`)
         - traefik.http.routers.rasa_${NAME}-http.entrypoints=http
         - traefik.http.routers.rasa_${NAME}-http.middlewares=https-redirect
@@ -52,92 +128,7 @@ services:
     volumes:
       - rasa_data:/app/models
     environment:
-      - BF_PROJECT_ID=${BF_PROJECT_ID-X5oK2rmS2GZTQ87Lk}
+      - BF_PROJECT_ID=${BF_PROJECT_ID}
       - BF_URL=http://botfront:3000/graphql
       - AUGMENTATION_FACTOR=50
       - MONGO_URL=mongodb://mongo:27017/bf
-      
-  botfront:
-    image: botfront/botfront:v1.0.6-patch.1
-    deploy:
-      placement:
-        constraints:
-          - node.labels.botfront.ips == ${NODE_LABEL}
-      labels:
-        - traefik.enable=true
-        - traefik.docker.network=traefik-public
-        - traefik.constraint-label=traefik-public
-        - traefik.http.routers.${NAME}-http.rule=Host(`${BF_URL}`)
-        - traefik.http.routers.${NAME}-http.entrypoints=http
-        - traefik.http.routers.${NAME}-http.middlewares=https-redirect
-        - traefik.http.routers.${NAME}-https.rule=Host(`${BF_URL}`)
-        - traefik.http.routers.${NAME}-https.entrypoints=https
-        - traefik.http.routers.${NAME}-https.tls=true
-        - traefik.http.routers.${NAME}-https.tls.certresolver=le
-        - traefik.http.services.${NAME}.loadbalancer.server.port=3000
-    networks:
-      - private
-      - ingress
-    #ports:
-     # - "${CODE-400}00:3000"
-    volumes:
-      - rasa_data:/app/models:ro
-    environment:
-      - PORT=3000
-      - ROOT_URL=https://botfront.${NAME}.saia.ar
-      - AUGMENTATION_FACTOR=50
-      - MONGO_URL=mongodb://mongo:27017/bf
-      
-  actions:
-    image: rasa/rasa-sdk:2.1.2
-    deploy:
-      placement:
-        constraints:
-          - node.labels.botfront.ips == ${NODE_LABEL}
-    networks:
-      - private
-    volumes:
-      - rasa_actions_data:/app/actions
-    command:
-      - start
-      - --debug
-      - --actions
-      - actions
-    environment:
-      - BF_PROJECT_ID=${BF_PROJECT_ID-X5oK2rmS2GZTQ87Lk}
-      
-  duckling:
-    image: botfront/duckling
-    deploy:
-      placement:
-        constraints:
-          - node.labels.botfront.ips == ${NODE_LABEL}
-    networks:
-      - private
-     
-  mongo:
-    image: mongo
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 300M
-        reservations:
-          cpus: '0.2'
-          memory: 50M
-      placement:
-        constraints:
-          - node.labels.botfront.ips == ${NODE_LABEL}
-    networks:
-      - private
-    volumes:
-      - db_data:/data/db
-    environment:
-      - BF_PROJECT_ID=${BF_PROJECT_ID-X5oK2rmS2GZTQ87Lk}
-      - BF_URL=http://botfront:3000/graphql
-      - AUGMENTATION_FACTOR=50
-      - MONGO_URL=mongodb://mongo:27017/bf
-      
-
-
-
