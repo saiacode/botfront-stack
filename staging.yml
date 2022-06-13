@@ -1,10 +1,5 @@
-# Botfront para single node
-# SOCKET_URL
-# NAME
-# BF_URL
-# BF_PROJECT_ID
-# NODE_LABEL (PRODUCTION, STAGING, DEVELOPMENT, BACKUP)
-# RASA_CPU_LIMIT (E.G.: 1.8 , 3.9 ) 
+# Botfront para staging
+
 
 version: "3.8"
 
@@ -28,15 +23,15 @@ services:
     deploy:
       placement:
         constraints:
-          - node.labels.botfront.${NODE_LABEL} == 1 
+          - node.labels.${NODE_LABEL} == 1 
       labels:
         - traefik.enable=true
         - traefik.docker.network=${INGRESS_NET}
         - traefik.constraint-label=${INGRESS_NET}
-        - traefik.http.routers.${NAME}-http.rule=Host(`${BF_URL}`)
+        - traefik.http.routers.${NAME}-http.rule=Host(`${DOMAIN}`)
         - traefik.http.routers.${NAME}-http.entrypoints=http
         - traefik.http.routers.${NAME}-http.middlewares=https-redirect
-        - traefik.http.routers.${NAME}-https.rule=Host(`${BF_URL}`)
+        - traefik.http.routers.${NAME}-https.rule=Host(`${DOMAIN}`)
         - traefik.http.routers.${NAME}-https.entrypoints=https
         - traefik.http.routers.${NAME}-https.tls=true
         - traefik.http.routers.${NAME}-https.tls.certresolver=le

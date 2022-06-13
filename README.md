@@ -3,7 +3,8 @@
 ## single-node
 Un solo nodo y volumen, para cambiarlo de nodo hay que hacer un backup.
 
-
+## staging
+El dominio sera {NAME}.saia.ar
 
 
 ## ENV Vars
