@@ -42,6 +42,7 @@ services:
     networks:
       - private
       - ingress
+      - mongo
     volumes:
       - rasa_data:/app/models:ro
     environment:
