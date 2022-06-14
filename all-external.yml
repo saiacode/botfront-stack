@@ -76,7 +76,7 @@ services:
     environment:
       FB_BASEURL: "/${NAME}/"
     volumes:
-      - rasa_data:/data/${NAME}
+      #- rasa_data:/data/${NAME}
       - filebrowser_config:/config
     networks:
       - ingress
