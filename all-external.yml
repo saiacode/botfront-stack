@@ -62,21 +62,20 @@ services:
       placement:
         constraints:
           - node.labels.${NODE_LABEL} == 1
-          - node.role == worker 
       labels:
         - traefik.enable=true
         - traefik.docker.network=${INGRESS_NET}
         - traefik.constraint-label=${INGRESS_NET}
-        - traefik.http.routers.files_${NAME}-http.rule=Host(`${DRIVE_DOMAIN}`) 
+        - traefik.http.routers.${NAME}-filebrowser-http.rule=Host(`${DRIVE_DOMAIN}`) && PathPrefix(`/${NAME}`)
         - traefik.http.routers.files_${NAME}-http.entrypoints=http
         - traefik.http.routers.files_${NAME}-http.middlewares=https-redirect
-        - traefik.http.routers.files_${NAME}-https.rule=Host(`${DRIVE_DOMAIN}`) 
+        - traefik.http.routers.${NAME}-filebrowser-https.rule=Host(`${DRIVE_DOMAIN}`) && PathPrefix(`/${NAME}`)
         - traefik.http.routers.files_${NAME}-https.entrypoints=https
         - traefik.http.routers.files_${NAME}-https.tls=true
         - traefik.http.routers.files_${NAME}-https.tls.certresolver=le
         - traefik.http.services.${NAME}.loadbalancer.server.port=8080
     environment:
-      - FB_BASEURL= "/${NAME}/"
+      FB_BASEURL: "/${NAME}/"
     volumes:
       - rasa_data:/data/
       - filebrowser_config:/config
