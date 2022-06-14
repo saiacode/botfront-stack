@@ -43,6 +43,7 @@ services:
       - private
       - ingress
       - mongo
+      - duckling
     volumes:
       - rasa_data:/app/models:ro
     environment:
@@ -99,10 +100,12 @@ services:
     networks:
       - private
       - ingress
+      - duckling
+      #- mongo
     volumes:
       - rasa_data:/app/models
     environment:
       - BF_PROJECT_ID=${BF_PROJECT_ID}
       - BF_URL=http://botfront:3000/graphql
       - AUGMENTATION_FACTOR=50
-      - MONGO_URL=${MONGO_URL}
+      #- MONGO_URL=${MONGO_URL}
