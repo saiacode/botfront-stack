@@ -19,6 +19,7 @@ networks:
 volumes:
   rasa_data:
   rasa_actions_data:
+  filebrowser_config:
 
 services:
   botfront:
@@ -45,7 +46,7 @@ services:
       - mongo
       - duckling
     volumes:
-      - rasa_data:/app/models:ro
+      - rasa_data:/app/models
     environment:
       - PORT=3000
       - ROOT_URL=https://${DOMAIN}
@@ -53,6 +54,35 @@ services:
       - MONGO_URL=${MONGO_URL}
       - APPLICATION_LOG_LEVEL=${BF_APPLICATION_LOG_LEVEL}
       - APPLICATION_API_LOG_LEVEL=${BF_APPLICATION_API_LOG_LEVEL}
+
+  filebrowser:
+    image: hurlenko/filebrowser
+    deploy:
+      placement:
+        constraints:
+          - node.labels.{NODE_LABEL} == 1
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+         #  https router
+        - traefik.http.routers.wordpress_${NAME}-http.rule=Host(`drive.saia.ar`) && PathPrefix(`/${NAME}`)"
+        - traefik.http.routers.wordpress_${NAME}-http.entrypoints=http
+        - traefik.http.routers.wordpress_${NAME}-http.middleware=https-redirect
+        #  https router
+        - traefik.http.routers.wordpress_${NAME}-https.rule=Host(`drive.saia.ar`) && PathPrefix(`/${NAME}`)"
+        - traefik.http.routers.wordpress_${NAME}-https.entrypoints=https
+        - traefik.http.routers.wordpress_${NAME}-https.tls=true
+        - traefik.http.routers.wordpress_${NAME}-https.tls.certresolver=le
+        #services
+        - traefik.http.services.wordpress_${NAME}.loadbalancer.server.port=${FB_PORT-80}
+    environment:
+      FB_BASEURL: "/${NAME}/"
+    volumes:
+      - rasa_data:/data/${NAME}
+      - filebrowser_config:/config
+    networks:
+      - ingress
       
   actions:
     image: ${ACTIONS_IMAGE}
@@ -102,8 +132,8 @@ services:
       - ingress
       - duckling
       #- mongo
-    volumes:
-      - rasa_data:/app/models
+    #volumes:
+     # - rasa_data:/app/models
     environment:
       - BF_PROJECT_ID=${BF_PROJECT_ID}
       - BF_URL=http://botfront:3000/graphql
