@@ -65,10 +65,10 @@ services:
         - traefik.enable=true
         - traefik.docker.network=${INGRESS_NET}
         - traefik.constraint-label=${INGRESS_NET}
-        - traefik.http.routers.${NAME}-fb-http.rule=Host(`${DRIVE_DOMAIN}`) && PathPrefix(`/${NAME}`)"
+        - traefik.http.routers.${NAME}-fb-http.rule=Host(`${DRIVE_DOMAIN}`) && PathPrefix(`/${NAME}`)
         - traefik.http.routers.${NAME}-fb-http.entrypoints=http
         - traefik.http.routers.${NAME}-fb-http.middlewares=https-redirect
-        - traefik.http.routers.${NAME}-fb-https.rule=Host(`${DRIVE_DOMAIN}`) && PathPrefix(`/${NAME}`)"
+        - traefik.http.routers.${NAME}-fb-https.rule=Host(`${DRIVE_DOMAIN}`) && PathPrefix(`/${NAME}`)
         - traefik.http.routers.${NAME}-fb-https.entrypoints=https
         - traefik.http.routers.${NAME}-fb-https.tls=true
         - traefik.http.routers.${NAME}-fb-https.tls.certresolver=le
