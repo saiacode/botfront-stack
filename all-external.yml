@@ -129,8 +129,8 @@ services:
       - ingress
       - duckling
       #- mongo
-    #volumes:
-     # - rasa_data:/app/models
+    volumes:
+      - rasa_data:/app/models
     environment:
       - BF_PROJECT_ID=${BF_PROJECT_ID}
       - BF_URL=http://botfront:3000/graphql
