@@ -74,9 +74,9 @@ services:
         - traefik.http.routers.${NAME}-fb-https.tls.certresolver=le
         - traefik.http.services.${NAME}.loadbalancer.server.port=8080
     environment:
-      FB_BASEURL: "/${NAME}/"
+      - FB_BASEURL=/${NAME}/
     volumes:
-      #- rasa_data:/data/${NAME}
+      - rasa_data:/data/${NAME}
       - filebrowser_config:/config
     networks:
       - ingress
