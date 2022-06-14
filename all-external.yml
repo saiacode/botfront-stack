@@ -60,7 +60,7 @@ services:
     deploy:
       placement:
         constraints:
-          - node.labels.{NODE_LABEL} == 1
+          - node.labels.${NODE_LABEL} == 1 
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-public
