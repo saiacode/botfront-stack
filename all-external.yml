@@ -56,7 +56,7 @@ services:
       - APPLICATION_API_LOG_LEVEL=${BF_APPLICATION_API_LOG_LEVEL}
 
   filebrowser:
-    image: hurlenko/filebrowser
+    image: hurlenko/filebrowser:v2.22.0
     deploy:
       placement:
         constraints:
