@@ -1,7 +1,7 @@
-# Botfront para staging
+# Static Stack
+# OLS Version
 
-
-version: "3.8"
+version: '3.8'
 
 networks:
   private:
@@ -14,12 +14,12 @@ networks:
   ingress:
     external: true
     name: ${INGRESS_NET}
-    
- 
+
 volumes:
-  rasa_data:
-  rasa_actions_data:
   filebrowser_data:
+  litespeed:
+  rasa_data:
+
 
 services:
   botfront:
@@ -49,12 +49,41 @@ services:
       - rasa_data:/app/models
     environment:
       - PORT=3000
-      - ROOT_URL=https://${DOMAIN}
+      - ROOT_URL=https://botfront.${DOMAIN}
       - AUGMENTATION_FACTOR=50
       - MONGO_URL=${MONGO_URL}
       - APPLICATION_LOG_LEVEL=${BF_APPLICATION_LOG_LEVEL}
       - APPLICATION_API_LOG_LEVEL=${BF_APPLICATION_API_LOG_LEVEL}
-
+      
+      
+  litespeed:
+    image: ${LITESPEED_IMAGE}
+    deploy:
+      resources:
+        limits:
+          cpus: ${LITESPEED_CPU_LIMIT}
+          memory: ${LITESPEED_MEMORY_LIMIT}
+      replicas: ${LITESPEED_REPLICAS}
+      placement:
+        constraints:
+          - node.labels.${NODE_LABEL} == 1
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=${INGRESS_NET}
+        - traefik.constraint-label=${INGRESS_NET}
+        - traefik.http.routers.${NAME}-static-http.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)
+        - traefik.http.routers.${NAME}-static-http.entrypoints=http
+        - traefik.http.routers.${NAME}-static-http.middlewares=https-redirect
+        - traefik.http.routers.${NAME}-static-https.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)
+        - traefik.http.routers.${NAME}-static-https.entrypoints=https
+        - traefik.http.routers.${NAME}-static-https.tls=true
+        - traefik.http.routers.${NAME}-static-https.tls.certresolver=le
+        - traefik.http.services.${NAME}-static.loadbalancer.server.port=${WEB_SERVER_PORT-80}
+    volumes:
+      - litespeed:/var/www/vhosts/localhost/html
+    networks:
+      - ingress
+      
   filebrowser:
     image: ${FB_IMAGE}
     deploy:
@@ -67,38 +96,20 @@ services:
         - traefik.docker.network=${INGRESS_NET}
         - traefik.constraint-label=${INGRESS_NET}
         - traefik.http.routers.${NAME}-filebrowser-http.rule=Host(`${DRIVE_DOMAIN}`) && PathPrefix(`/${NAME}`)
-        - traefik.http.routers.files_${NAME}-http.entrypoints=http
-        - traefik.http.routers.files_${NAME}-http.middlewares=https-redirect
+        - traefik.http.routers.${NAME}-filebrowser-http.entrypoints=http
+        - traefik.http.routers.${NAME}-filebrowser-http.middlewares=https-redirect
         - traefik.http.routers.${NAME}-filebrowser-https.rule=Host(`${DRIVE_DOMAIN}`) && PathPrefix(`/${NAME}`)
-        - traefik.http.routers.files_${NAME}-https.entrypoints=https
-        - traefik.http.routers.files_${NAME}-https.tls=true
-        - traefik.http.routers.files_${NAME}-https.tls.certresolver=le
-        - traefik.http.services.${NAME}.loadbalancer.server.port=8080
+        - traefik.http.routers.${NAME}-filebrowser-https.entrypoints=https
+        - traefik.http.routers.${NAME}-filebrowser-https.tls=true
+        - traefik.http.routers.${NAME}-filebrowser-https.tls.certresolver=le
+        - traefik.http.services.${NAME}-filebrowser.loadbalancer.server.port=${FB_PORT-8080}
     environment:
       FB_BASEURL: "/${NAME}/"
     volumes:
-      - rasa_data:/data/
+      - litespeed:/data/
       - filebrowser_data:/config
     networks:
       - ingress
-      
-  actions:
-    image: ${ACTIONS_IMAGE}
-    deploy:
-      placement:
-        constraints:
-          - node.labels.${NODE_LABEL} == 1 
-    networks:
-      - private
-    volumes:
-      - rasa_actions_data:/app/actions
-    command:
-      - start
-      - --debug
-      - --actions
-      - actions
-    environment:
-      - BF_PROJECT_ID=${BF_PROJECT_ID}
       
   rasa:
     image: ${RASA_IMAGE}
@@ -117,10 +128,10 @@ services:
         - traefik.enable=true
         - traefik.docker.network=${INGRESS_NET}
         - traefik.constraint-label=${INGRESS_NET}
-        - traefik.http.routers.rasa_${NAME}-http.rule=Host(`${RASA_URL}`)
+        - traefik.http.routers.rasa_${NAME}-http.rule=Host(`socket.${DOMAIN}`)
         - traefik.http.routers.rasa_${NAME}-http.entrypoints=http
         - traefik.http.routers.rasa_${NAME}-http.middlewares=https-redirect
-        - traefik.http.routers.rasa_${NAME}-https.rule=Host(`${RASA_URL}`)
+        - traefik.http.routers.rasa_${NAME}-https.rule=Host(`socket.${DOMAIN}`)
         - traefik.http.routers.rasa_${NAME}-https.entrypoints=https
         - traefik.http.routers.rasa_${NAME}-https.tls=true
         - traefik.http.routers.rasa_${NAME}-https.tls.certresolver=le
@@ -136,4 +147,7 @@ services:
       - BF_PROJECT_ID=${BF_PROJECT_ID}
       - BF_URL=http://botfront:3000/graphql
       - AUGMENTATION_FACTOR=50
-      #- MONGO_URL=${MONGO_URL}
+  
+
+
+    
